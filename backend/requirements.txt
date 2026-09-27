@@ -1,0 +1,34 @@
+# ---- Core runtime -----------------------------------------------------------
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+sqlalchemy==2.0.36
+pydantic==2.10.4
+pydantic-settings==2.7.0
+python-multipart==0.0.20
+email-validator==2.2.0
+
+# ---- Security ---------------------------------------------------------------
+bcrypt==4.2.1
+PyJWT==2.10.1
+authlib==1.4.0
+httpx==0.28.1
+
+# ---- Reporting --------------------------------------------------------------
+reportlab==4.2.5
+
+# ---- ML / analytics ---------------------------------------------------------
+scikit-learn==1.6.0
+numpy==2.2.1
+
+# ---- Optional: enabled automatically when installed + configured -------------
+# PostgreSQL driver (used when DATABASE_URL points at postgres)
+psycopg[binary]==3.2.3 ; platform_system != "Emscripten"
+# Redis cache for threat-intel reputation lookups (falls back to in-memory)
+redis==5.2.1
+
+# ---- Optional heavy extras (see requirements-extra.txt) ---------------------
+# chromadb, sentence-transformers, langsmith, arize-phoenix
+
+# ---- Dev / CI ---------------------------------------------------------------
+pytest==8.3.4
+ruff==0.8.4

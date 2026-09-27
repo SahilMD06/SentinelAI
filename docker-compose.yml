@@ -1,0 +1,88 @@
+# SentinelAI — full stack: FastAPI backend, React/nginx frontend, Postgres,
+# and Redis. Every integration the backend supports has a working offline
+# fallback, so `docker compose up` produces a fully functional platform even
+# before any API keys are added to backend/.env.
+#
+#   docker compose up --build
+#   → frontend  http://localhost:3000
+#   → backend   http://localhost:8000/docs
+#
+name: sentinelai
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sentinelai
+      POSTGRES_PASSWORD: sentinelai
+      POSTGRES_DB: sentinelai
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinelai -d sentinelai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    # Values below are read from a root-level .env if one exists (Compose
+    # loads it automatically for ${...} substitution) — otherwise every
+    # optional integration defaults to blank and the platform runs on its
+    # deterministic offline fallbacks. See .env.example for the full list.
+    environment:
+      DATABASE_URL: postgresql+psycopg://sentinelai:sentinelai@db:5432/sentinelai
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      FRONTEND_URL: http://localhost:3000
+      OIDC_REDIRECT_URI: http://localhost:8000/api/auth/sso/callback
+      JWT_SECRET: ${JWT_SECRET:-sentinelai-dev-secret-change-me-in-production}
+      VIRUSTOTAL_API_KEY: ${VIRUSTOTAL_API_KEY:-}
+      ABUSEIPDB_API_KEY: ${ABUSEIPDB_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      PHOENIX_COLLECTOR_ENDPOINT: ${PHOENIX_COLLECTOR_ENDPOINT:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_DISCOVERY_URL: ${OIDC_DISCOVERY_URL:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend-data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  db-data:
+  redis-data:
+  backend-data:

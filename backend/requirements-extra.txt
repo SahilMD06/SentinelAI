@@ -1,0 +1,16 @@
+# Optional "full fat" stack. SentinelAI runs completely without these — every
+# module below has a deterministic local fallback. Install them to switch the
+# platform from fallback mode to the production-grade implementation.
+#
+#   pip install -r requirements-extra.txt
+#
+# ---- Semantic RAG -----------------------------------------------------------
+chromadb==0.5.23                 # vector database (VECTOR_BACKEND=chroma)
+faiss-cpu>=1.9.0                 # alternative ANN index (VECTOR_BACKEND=faiss)
+sentence-transformers==3.3.1     # all-MiniLM-L6-v2 local embeddings
+pgvector==0.3.6                  # pgvector backend when using PostgreSQL
+
+# ---- Observability / AI tracing --------------------------------------------
+langsmith==0.2.6                 # TRACING_EXPORTER=langsmith
+arize-phoenix-otel==0.6.1        # TRACING_EXPORTER=phoenix
+opentelemetry-sdk==1.29.0

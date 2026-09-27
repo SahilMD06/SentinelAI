@@ -1,0 +1,68 @@
+name: Deploy
+
+# Auto-deploys on every push to main once CI is green. Both jobs are no-ops
+# until their secrets are configured in the repo (Settings → Secrets and
+# variables → Actions) — this workflow is safe to merge before deployment
+# targets exist and starts working the moment the secrets are added.
+#
+#   RENDER_DEPLOY_HOOK_URL  — Render service → Settings → Deploy Hook
+#   VERCEL_TOKEN            — Vercel account → Settings → Tokens
+#   VERCEL_ORG_ID           — `vercel link` writes this to .vercel/project.json
+#   VERCEL_PROJECT_ID       — `vercel link` writes this to .vercel/project.json
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types: [completed]
+
+jobs:
+  deploy-backend:
+    name: Deploy backend → Render
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Check for deploy hook
+        id: check
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::RENDER_DEPLOY_HOOK_URL is not set — skipping backend deploy."
+          fi
+
+      - name: Trigger Render deploy
+        if: steps.check.outputs.configured == 'true'
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+  deploy-frontend:
+    name: Deploy frontend → Vercel
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Check for Vercel credentials
+        id: check
+        run: |
+          if [ -n "${{ secrets.VERCEL_TOKEN }}" ] && [ -n "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::VERCEL_TOKEN / VERCEL_PROJECT_ID are not set — skipping frontend deploy."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.configured == 'true'
+
+      - name: Deploy to Vercel
+        if: steps.check.outputs.configured == 'true'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"
+          working-directory: frontend

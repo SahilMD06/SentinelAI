@@ -1,0 +1,295 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Palette. Light = Linear/Stripe: white surfaces, hairline borders, near-black
+   text. Dark = Datadog: deep slate canvas, one step up per elevation level.
+   Values are RGB channels so Tailwind alpha modifiers compose.
+--------------------------------------------------------------------------- */
+:root {
+  --c-canvas: 247 248 250;
+  --c-surface: 255 255 255;
+  --c-raised: 255 255 255;
+  --c-sunken: 241 243 246;
+  --c-line: 226 230 236;
+  --c-line-strong: 205 211 220;
+  --c-ink: 16 24 40;
+  --c-ink-2: 71 84 103;
+  --c-ink-3: 133 143 158;
+  --c-accent: 79 70 229;
+  --c-accent-hover: 67 56 202;
+  --c-accent-soft: 238 238 253;
+  --c-critical: 199 33 42;
+  --c-high: 194 65 12;
+  --c-medium: 161 98 7;
+  --c-low: 2 105 161;
+  --c-info: 100 116 139;
+  --c-success: 21 128 61;
+
+  --grid-line: rgb(226 230 236);
+  --scroll-thumb: 203 213 225;
+}
+
+.dark {
+  --c-canvas: 13 17 23;
+  --c-surface: 22 27 34;
+  --c-raised: 28 33 41;
+  --c-sunken: 17 21 28;
+  --c-line: 40 47 57;
+  --c-line-strong: 60 70 84;
+  --c-ink: 230 237 243;
+  --c-ink-2: 139 148 158;
+  --c-ink-3: 106 115 125;
+  --c-accent: 99 102 241;
+  --c-accent-hover: 129 130 246;
+  --c-accent-soft: 32 34 62;
+  --c-critical: 248 81 73;
+  --c-high: 247 115 30;
+  --c-medium: 219 160 32;
+  --c-low: 56 139 253;
+  --c-info: 125 133 144;
+  --c-success: 63 185 80;
+
+  --grid-line: rgb(40 47 57);
+  --scroll-thumb: 55 65 81;
+}
+
+@layer base {
+  * {
+    border-color: theme('colors.line');
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+    font-size: 13.5px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgb(var(--c-accent) / 0.25);
+  }
+
+  /* Slim scrollbars keep dense tables from losing horizontal space. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--scroll-thumb));
+    border-radius: 6px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--c-line-strong));
+    background-clip: content-box;
+    border: 3px solid transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--c-accent));
+    outline-offset: 1px;
+    border-radius: 3px;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply bg-surface text-ink;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-ink-3;
+  }
+}
+
+@layer components {
+  /* -- Structure ---------------------------------------------------------- */
+  .panel {
+    @apply bg-surface border border-line rounded-md;
+  }
+
+  .panel-header {
+    @apply flex items-center justify-between gap-3 px-4 h-11 border-b border-line;
+  }
+
+  .panel-title {
+    @apply text-sm font-semibold text-ink tracking-tight;
+  }
+
+  .section-label {
+    @apply text-2xs font-semibold uppercase tracking-[0.09em] text-ink-3;
+  }
+
+  /* -- Data tables -------------------------------------------------------- */
+  .dtable {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .dtable thead th {
+    @apply sticky top-0 z-10 bg-sunken text-2xs font-semibold uppercase tracking-[0.07em]
+           text-ink-3 text-left px-3 py-2 border-b border-line whitespace-nowrap select-none;
+  }
+
+  .dtable tbody td {
+    @apply px-3 py-[7px] border-b border-line/70 align-top;
+  }
+
+  .dtable tbody tr:hover {
+    background: rgb(var(--c-accent) / 0.045);
+  }
+
+  .dtable tbody tr.is-selected {
+    background: rgb(var(--c-accent) / 0.1);
+  }
+
+  /* -- Controls ----------------------------------------------------------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded
+           text-sm font-medium whitespace-nowrap transition-colors duration-120
+           disabled:opacity-45 disabled:cursor-not-allowed disabled:pointer-events-none;
+  }
+
+  .btn-sm {
+    @apply h-7 px-2.5 text-xs gap-1;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent text-white hover:bg-accent-hover;
+  }
+
+  .btn-secondary {
+    @apply btn bg-surface border border-line-strong text-ink hover:bg-sunken;
+  }
+
+  .btn-ghost {
+    @apply btn text-ink-2 hover:bg-sunken hover:text-ink;
+  }
+
+  .btn-danger {
+    @apply btn bg-critical text-white hover:opacity-90;
+  }
+
+  .field {
+    @apply h-8 w-full px-2.5 rounded border border-line bg-surface text-sm text-ink
+           placeholder:text-ink-3 focus:border-accent focus:outline-none
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .field-mono {
+    @apply field font-mono text-xs;
+  }
+
+  /* -- Badges ------------------------------------------------------------- */
+  .badge {
+    @apply inline-flex items-center gap-1 h-[18px] px-1.5 rounded-[3px]
+           text-2xs font-semibold uppercase tracking-[0.04em] whitespace-nowrap;
+  }
+
+  .badge-outline {
+    @apply badge border border-line text-ink-2 bg-transparent;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 h-[20px] px-2 rounded-full border border-line
+           bg-sunken text-2xs font-medium text-ink-2;
+  }
+
+  .kbd {
+    @apply inline-flex items-center h-[17px] px-1 rounded-[3px] border border-line
+           bg-sunken font-mono text-2xs text-ink-3;
+  }
+
+  /* -- Navigation --------------------------------------------------------- */
+  .nav-item {
+    @apply relative flex items-center gap-2.5 h-8 px-2 rounded text-sm font-medium
+           text-ink-2 hover:text-ink hover:bg-sunken transition-colors duration-120;
+  }
+
+  .nav-item-active {
+    @apply text-ink bg-accent/10;
+  }
+
+  .nav-item-active::before {
+    content: '';
+    @apply absolute -left-2 top-1.5 bottom-1.5 w-[2px] rounded-full bg-accent;
+  }
+
+  .tab {
+    @apply relative h-9 px-3 text-sm font-medium text-ink-2 hover:text-ink
+           border-b-2 border-transparent -mb-px transition-colors duration-120;
+  }
+
+  .tab-active {
+    @apply text-ink border-accent;
+  }
+
+  /* -- Misc --------------------------------------------------------------- */
+  .link {
+    @apply text-accent hover:underline underline-offset-2 cursor-pointer;
+  }
+
+  .divider {
+    @apply h-px bg-line;
+  }
+
+  .skeleton {
+    @apply bg-line/60 rounded animate-pulse;
+  }
+
+  .scroll-y {
+    @apply overflow-y-auto overscroll-contain;
+  }
+
+  .locked {
+    @apply opacity-45 cursor-not-allowed pointer-events-none;
+  }
+}
+
+@layer utilities {
+  .grid-bg {
+    background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Markdown rendered inside the executive brief and Copilot replies. */
+.md h1,
+.md h2,
+.md h3 {
+  @apply font-semibold text-ink mt-4 mb-1.5;
+}
+.md h1 { @apply text-lg; }
+.md h2 { @apply text-md; }
+.md h3 { @apply text-base; }
+.md p { @apply my-1.5 text-ink-2 leading-relaxed; }
+.md ul { @apply my-1.5 space-y-1 pl-4 list-disc marker:text-ink-3; }
+.md ol { @apply my-1.5 space-y-1 pl-4 list-decimal marker:text-ink-3; }
+.md li { @apply text-ink-2; }
+.md strong { @apply text-ink font-semibold; }
+.md code {
+  @apply font-mono text-xs px-1 py-px rounded-[3px] bg-sunken border border-line text-ink;
+}
+.md em { @apply text-ink-3 not-italic text-xs; }
+.md hr { @apply my-3 border-line; }
