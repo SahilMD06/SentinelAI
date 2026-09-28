@@ -51,9 +51,9 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://sentinelai:sentinelai@db:5432/sentinelai
       REDIS_URL: redis://redis:6379/0
-      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
-      FRONTEND_URL: http://localhost:3000
-      OIDC_REDIRECT_URI: http://localhost:8000/api/auth/sso/callback
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-http://localhost:8000/api/auth/sso/callback}
       JWT_SECRET: ${JWT_SECRET:-sentinelai-dev-secret-change-me-in-production}
       VIRUSTOTAL_API_KEY: ${VIRUSTOTAL_API_KEY:-}
       ABUSEIPDB_API_KEY: ${ABUSEIPDB_API_KEY:-}
