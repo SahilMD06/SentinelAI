@@ -40,9 +40,6 @@ jobs:
     name: Deploy frontend → Vercel
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - name: Check for Vercel credentials
         id: check
