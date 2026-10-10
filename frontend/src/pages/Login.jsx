@@ -24,10 +24,11 @@ export default function Login() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [demo, setDemo] = useState(null);
+  const [demoError, setDemoError] = useState(null);
   const [sso, setSso] = useState(null);
 
   useEffect(() => {
-    api.demoAccounts().then(setDemo).catch(() => setDemo(null));
+    api.demoAccounts().then(setDemo).catch((err) => setDemoError(err.message || 'Could not reach the API'));
     api.ssoConfig().then(setSso).catch(() => setSso(null));
   }, []);
 
@@ -200,9 +201,17 @@ export default function Login() {
                 </button>
               ))}
 
-              {!demo && (
+              {!demo && !demoError && (
                 <div className="sm:col-span-2 py-8 flex items-center justify-center gap-2 text-xs text-ink-3">
                   <Spinner /> Loading evaluation accounts…
+                </div>
+              )}
+
+              {demoError && (
+                <div className="sm:col-span-2 py-8 flex flex-col items-center justify-center gap-1.5 text-center px-4">
+                  <span className="text-xs text-critical">Couldn&rsquo;t reach the API to load evaluation accounts.</span>
+                  <span className="font-mono text-2xs text-ink-3">{demoError}</span>
+                  <span className="text-2xs text-ink-3">Is the backend running on port 8000?</span>
                 </div>
               )}
             </div>

@@ -658,7 +658,40 @@ def agent_root_cause(state: PipelineState) -> AgentOutput:
 # ---------------------------------------------------------------------------
 def agent_recommendation(state: PipelineState) -> AgentOutput:
     inc, db, s = state.incident, state.db, state.shared
-    key, playbook = playbooks.for_category(inc.category)
+
+    # The incident's `category` is a static label attached when the case was
+    # created (or seeded) and can be wrong relative to what this investigation's
+    # correlated telemetry actually shows — e.g. a case filed under 'availability'
+    # whose events are really a credential-guessing burst. Re-derive the category
+    # from the same keyword evidence the MITRE Mapper stage uses, and only
+    # override the seeded category when that evidence clearly points elsewhere.
+    effective_category = inc.category
+    category_override = None
+    corpus = " ".join(
+        [inc.title, inc.summary or "", *[e.message for e in state.events[:60]]]
+    )
+    evidence = mitre.match_text(corpus, limit=1)
+    if evidence:
+        top_technique = evidence[0]["id"]
+        seeded_key, _ = playbooks.for_category(inc.category)
+        for candidate_category, technique_ids in mitre.CATEGORY_TECHNIQUES.items():
+            if top_technique not in technique_ids or candidate_category == inc.category:
+                continue
+            candidate_key, _ = playbooks.for_category(candidate_category)
+            if candidate_key != seeded_key:
+                effective_category = candidate_category
+                category_override = (
+                    f"Correlated telemetry evidence points to {top_technique} "
+                    f"({evidence[0]['name']}), not the case's seeded category "
+                    f"'{inc.category}' — recommending the '{candidate_category}' "
+                    "playbook instead."
+                )
+                break
+            # Same playbook under a different category name (e.g. brute-force /
+            # credential-access both map to pb-bruteforce) — not a real override,
+            # keep scanning for a candidate that actually differs.
+
+    key, playbook = playbooks.for_category(effective_category)
 
     existing = db.execute(
         select(PlaybookItem).where(PlaybookItem.incident_id == inc.id)
@@ -681,9 +714,14 @@ def agent_recommendation(state: PipelineState) -> AgentOutput:
     if risk >= 80:
         sla = min(sla, 15)
 
-    lines = [
+    lines = []
+    if category_override:
+        lines.append(category_override)
+    lines += [
         f"Selected playbook '{playbook['name']}' ({key}) — matched on incident category "
-        f"'{inc.category}'.",
+        f"'{effective_category}'"
+        + (f" (seeded category was '{inc.category}')" if category_override else "")
+        + ".",
         f"{len(playbook['steps'])} steps across "
         f"{len({p for p, *_ in playbook['steps']})} NIST SP 800-61 phases; "
         f"{sum(1 for step in playbook['steps'] if step[3])} are automatable via SOAR.",
@@ -716,6 +754,8 @@ def agent_recommendation(state: PipelineState) -> AgentOutput:
         findings={
             "playbook_key": key,
             "playbook_name": playbook["name"],
+            "category_used": effective_category,
+            "category_overridden": category_override is not None,
             "steps": len(playbook["steps"]),
             "created_items": created,
             "sla_minutes": sla,
